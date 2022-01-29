@@ -6,7 +6,6 @@
 	width: 100%;
 }
 
-
 .navbar a {
 	float: left;
 	display: block;
@@ -17,16 +16,23 @@
 	font-size: 17px;
 }
 
-
 .navbar a:hover {
 	background: #ddd;
 	color: black;
 }
 
+.topnav a.active {
+  background-color: #04AA6D;
+  color: white;
+}
+
+
+
 
 body {
-	background-color: rgb(16, 8, 98);
-	color: #EEEEEE;
+	background-color: #29F1E0;
+	color: #000000;
+	font-family: Arial, Helvetica, sans-serif;
 }
 
 
@@ -34,10 +40,13 @@ header {
 	/*background-color: rgb(28, 18, 111);
 	border-color: rgb(28, 18, 111);*/
 	margin-top: 45px;
-	color: #EEEEEE;
+	color: #000000 ;
 }
 
 
 h1 {
 	text-indent: 50px;
 }
+
+
+#A3A3A3 
