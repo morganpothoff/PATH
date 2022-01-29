@@ -1,4 +1,6 @@
 .navbar {
+	margin-top: 80px; 
+    width: 900px;
 	overflow: hidden;
 	background-color: #333;
 	position: fixed;
@@ -21,7 +23,7 @@
 	color: black;
 }
 
-.topnav a.active {
+.navbar a.active {
   background-color: #04AA6D;
   color: white;
 }
@@ -30,23 +32,17 @@
 
 
 body {
+	margin: 0;
 	background-color: #29F1E0;
 	color: #000000;
 	font-family: Arial, Helvetica, sans-serif;
 }
 
-
 header {
-	/*background-color: rgb(28, 18, 111);
-	border-color: rgb(28, 18, 111);*/
-	margin-top: 45px;
+	margin-top: 5px;
 	color: #000000 ;
 }
-
 
 h1 {
 	text-indent: 50px;
 }
-
-
-#A3A3A3 
