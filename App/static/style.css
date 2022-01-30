@@ -24,7 +24,7 @@
 }
 
 .navbar a.active {
-  background-color: #04AA6D;
+  background-color: #110ec9;
   color: white;
 }
 
@@ -33,7 +33,7 @@
 
 body {
 	margin: 0;
-	background-color: #29F1E0;
+	background-color: #ababab;
 	color: #000000;
 	font-family: Arial, Helvetica, sans-serif;
 }

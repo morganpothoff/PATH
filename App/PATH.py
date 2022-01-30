@@ -14,10 +14,13 @@ app = Flask(__name__, static_url_path="/static")
 def home():
 	return render_template("Home.html")
 
+@app.route("/AddEvents")
+def addEvents():
+	return render_template("AddEvents.html")
 
-@app.route("/AddAssignments")
-def newDream():
-	return render_template("AddAssignments.html")
+@app.route("/Timeline")
+def timeline():
+	return render_template("Timeline.html")
 
 
 app.run(host="localhost", port=8000, debug=True)
