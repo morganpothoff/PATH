@@ -60,6 +60,14 @@ input[type=text] {
 	margin: 2px;
 }
 
+input[type="date"] {
+	background-color: #CBCCD2;
+}
+
+input[type="number"] {
+	background-color: #CBCCD2;
+}
+
 button {
 	border: 2px solid #666666;
 	border-radius: 5px;

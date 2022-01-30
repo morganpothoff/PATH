@@ -12,19 +12,26 @@
         <form>
             <br>
             Event Name:
-            <input type="text" name="Title" size="32px">
+            <input type="text" id="title" name="Title" size="30px">
             <br>
             Course Name:
-            <input type="text" name="Course" size="31">
+            <input type="text" id="courseName" name="Course" size="30">
             <br>
             Type of Event (ex. Assignment):
-            <input type="text" name="Type" size="15">
+
+            <input type="text" id="eventType" name="Type" size="30" list="eventType" autocomplete="off">
+                <datalist id="eventType" autocomplete="off">
+                    {% for eventType in eventType %}
+                        <option value="{{ eventType }}">
+                    {% endfor %}
+                </datalist>
+
             <br>
             Due Date:
-            <input type="date" name="Date">
+            <input class="advancedSearchTextBox" type="date" id="dueDate" name="Date">
             <br>
             Estimated Time (in hours):
-            <input type="number" id="time" name="time" min="1" max="150">
+            <input type="number" id="time" name="time" min="1" max="70">
             <br>
         </form>
 
