@@ -19,14 +19,17 @@
 
     class Event
     {
-        constructor(end, duration /* seconds */, name, class_name)
+        constructor(end, duration /* milliseconds */, name, class_name, type)
         {
             this.end = end;
-            this.duration = duration * 1000;  // milliseconds
+            this.duration = duration;
             this.name = name;
             this.class_name = class_name;
+            this.type = type;
         }
     }
+
+
 
 
     class TimelineTime
@@ -62,11 +65,7 @@
     function horizontal_screen_position(time, time_range_start, time_range_end, border)
     {
         // Calculate time relative data
-        print(time);
-        print(time_range_start);
         var event_time_offset = Math.abs(time - time_range_start);
-        print(event_time_offset);
-        print("\n")
         var displayed_time_span = Math.abs(time_range_end - time_range_start);  // Range of displayed time
         var time_percentage = event_time_offset / displayed_time_span;  // % of the time range for the time event
 
@@ -176,10 +175,56 @@
         draw_events(events, week, 30);
     }
 
+    
+    function processForm()
+    {
+        $.ajax({
+			url: '/Api/AllEvents',
+			type: 'POST',
+			// dataType: "json",
+			// data: {"trans_id" : <?php echo $trans_id;?>, "payer" : payer_input.value},
+            contentType: 'application/json',
+			success: function(response)
+            {
+				// do something
+                var week =
+                [
+                    new TimelineTime(new Date(2022, 0, 31), "Monday"),
+                    new TimelineTime(new Date(2022, 1, 1), "Tueday"),
+                    new TimelineTime(new Date(2022, 1, 2), "Wednesday"),
+                    new TimelineTime(new Date(2022, 1, 3), "Thursday"),
+                    new TimelineTime(new Date(2022, 1, 4), "Friday"),
+                    new TimelineTime(new Date(2022, 1, 5), "Saturday"),
+                    new TimelineTime(new Date(2022, 1, 6), "Sunday"),
+                    new TimelineTime(new Date(2022, 1, 7), "Monday"),
+                ];
+
+                var events = [];
+                for (var event of JSON.parse(response))
+                {
+                    print(event)
+                    events.push(
+                        // end, duration /* milliseconds */, name, class_name, type
+                        new Event(
+                            new Date(event["dueDate"]), 
+                            event["duration"] * 1000,  // convert to millis
+                            event["title"],
+                            event["className"],
+                            event["type"]
+                        )
+                    );
+                }
+
+                draw_timeline(week);
+                draw_events(events, week, 30);
+			}
+		});
+    }
+
 
     function main()
     {
-        test_timeline();
+        processForm();
     }
 
 

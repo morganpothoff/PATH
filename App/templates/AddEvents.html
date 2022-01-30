@@ -9,7 +9,7 @@
         </div>
 
     <div style="padding-left:15%">
-        <form>
+        <form action="" method="POST">
             <br>
             Event Name:
             <input type="text" id="title" name="Title" size="30px">
@@ -31,11 +31,13 @@
             <input class="advancedSearchTextBox" type="date" id="dueDate" name="Date">
             <br>
             Estimated Time (in hours):
-            <input type="number" id="time" name="time" min="1" max="70">
+            <input type="number" id="time" name="time" value={{request.form.time}} min="1" max="70">
             <br>
+            <button type="submit">Save Event</button>
         </form>
         <br>
-        <button type="button">Clear</button> <button type="button">View Timeline</button> <button type="button">Save Event</button>
+        <button type="button">Clear</button> <button type="button">View Timeline</button>  
+        
     </div>
 
 {% endblock %}

@@ -60,14 +60,14 @@ def main():
 	username = os.getenv("GC_DB_USER")
 	password = os.getenv("GC_DB_PASSWORD")
 	db_name = "PATH_DB"
-	ip_address = os.getenv("GC_DB_IP")
+	ip_address = "34.71.64.211" #os.getenv("GC_DB_IP")
 
-	cnx, cursor = __CONNECT__(username, password, db_name)
+	cnx, cursor = __CONNECT__("pathuser", "pathuserpassword", db_name)
 
 	# insert_new_event(cnx, cursor, "HW2", "CS 4384", "homework", datetime.strptime("2022-02-06 23:59:59", "%Y-%m-%d %H:%M:%S"), "01:00:00")
 	print(select_all_events(cursor))
-	print("\n\n\n\n")
-	print(select_event_range(cursor, datetime.strptime("2022-01-30 23:59:59", "%Y-%m-%d %H:%M:%S"), datetime.strptime("2022-02-06 23:59:59", "%Y-%m-%d %H:%M:%S")))
+	# print("\n\n\n\n")
+	# print(select_event_range(cursor, datetime.strptime("2022-01-30 23:59:59", "%Y-%m-%d %H:%M:%S"), datetime.strptime("2022-02-06 23:59:59", "%Y-%m-%d %H:%M:%S")))
 
 
 
