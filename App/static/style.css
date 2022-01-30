@@ -1,7 +1,6 @@
 .navbar {
-	margin-top: 80px; 
-    width: 900px;
-	overflow: hidden;
+  width: 100%;
+	/*overflow: hidden;*/
 	background-color: #333;
 	position: fixed;
 	top: 0;
@@ -28,6 +27,9 @@
   color: white;
 }
 
+.navbar div {
+	background-color: #ababab;
+}
 
 
 
@@ -45,4 +47,9 @@ header {
 
 h1 {
 	text-indent: 50px;
+}
+
+
+html {
+	height: 100%;
 }

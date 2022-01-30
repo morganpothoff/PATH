@@ -1,34 +1,190 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <link rel='stylesheet' href='static/style.css'>
-        <title>Timeline</title>
-    </head>
+{% extends "Wrapper.html" %}
+{% block body %}
 
-    <header>
-        <table>
-            <tr>
-                <td>
-                    <h1>PATH</h1>
-                    <br> <br>
-                    <div style="padding-left:20px">
-                        <h2>Here is your current timeline.</h2>
-                    </div>
-                </td>
-            </tr>
-        </table>
-    </header>
-
-    <body>
-        <div class="navbar">
-            <a href="/">Home</a>
-            <a href="/AddEvents">Add Events</a>
-            <a class="active" href="/Timeline">Timeline</a>
+        <div id="__DIV__timeline" style="width:98%;height:100%;padding-left:1%;padding-right: 1%;padding-bottom: 1%;">
+            <canvas id="__CANVAS__timeline" style="background-color: #333333;border-radius: 5px;">
+            </canvas>
         </div>
 
-        <div style="padding-left:20px">
-            
-        </div>
-    </body>
+<script>
 
-<html>
+    // Set the size dynamically to avoid blurring
+    $("#__CANVAS__timeline").attr("height", $("#__DIV__timeline").height());
+    $("#__CANVAS__timeline").attr("width", $("#__DIV__timeline").width());
+
+    var TIMELINE_CANVAS = document.getElementById("__CANVAS__timeline");
+    var TIMELINE_CANVAS_HEIGHT = TIMELINE_CANVAS.height;
+    var TIMELINE_CANVAS_WIDTH = TIMELINE_CANVAS.width;
+
+
+    class Event
+    {
+        constructor(end, duration /* seconds */, name, class_name)
+        {
+            this.end = end;
+            this.duration = duration * 1000;  // milliseconds
+            this.name = name;
+            this.class_name = class_name;
+        }
+    }
+
+
+    class TimelineTime
+    {
+        constructor(datetime, name)
+        {
+            this.datetime = datetime;
+            this.name = name;
+        }
+    }
+
+
+    // ———————————————————————————————————————————————— UTILITY ———————————————————————————————————————————————————— //
+
+    function print(value)
+    {
+        console.log(value);
+    }
+
+
+    // —————————————————————————————————————————————— CALCUALTION —————————————————————————————————————————————————— //
+
+    // SUMMARY: Determines the horizontal position of the time on the screen in pixels.
+    // PARAMS:  Takes the time to calculate position for, the start time of the timeline, the end time of the timeline,
+    //  the border provided for the timeline padding.
+    // DETAILS: Based on the formulae:
+    //  >  Position % = (desired time - range start) / (range end - range start)       // IE.  % = value / total
+    //  >  where time offset is the start of the time range, and end time is the end of the time range.
+    //  —— AND ——
+    //  >  Position Pixels = Position % * Canvas Size + Pixel Offset
+    //  >  where pixel offset is the border of the drawable area.
+    // RETURNS: The position for the canvas.
+    function horizontal_screen_position(time, time_range_start, time_range_end, border)
+    {
+        // Calculate time relative data
+        print(time);
+        print(time_range_start);
+        var event_time_offset = Math.abs(time - time_range_start);
+        print(event_time_offset);
+        print("\n")
+        var displayed_time_span = Math.abs(time_range_end - time_range_start);  // Range of displayed time
+        var time_percentage = event_time_offset / displayed_time_span;  // % of the time range for the time event
+
+        // Calculate screen relative data for time relative data
+        var display_area_for_canvas = TIMELINE_CANVAS_WIDTH - (border * 2);  // pixels
+        var canvas_percentage = time_percentage * display_area_for_canvas;  // pixels
+        var canvas_position = canvas_percentage + border;
+
+        return parseInt(canvas_position);
+    }
+
+
+    // ———————————————————————————————————————————————— DRAW SHAPES ———————————————————————————————————————————————— //
+
+    // FROM: https://www.javascripttutorial.net/web-apis/javascript-draw-line/
+    function draw_line(begin, end, stroke='#BBBBBB', width=1)
+    {
+        const ctx = TIMELINE_CANVAS.getContext('2d');
+
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = width;
+        ctx.lineCap = "butt";  // butt, round, square
+
+        ctx.beginPath();
+        ctx.moveTo(...begin);
+        ctx.lineTo(...end);
+        ctx.stroke();
+    }
+
+
+    function draw_text(text, x, y, color="#BBBBBB", font="15px Helvetica")
+    {
+        var ctx = TIMELINE_CANVAS.getContext("2d");
+        ctx.font = font;
+        ctx.fillStyle = color;
+        ctx.fillText(text, x, y);
+    }
+
+    
+    // ————————————————————————————————————————————————— DRAW  DATA ————————————————————————————————————————————————— //
+
+    function draw_timeline(timeline_times, border=35)
+    {
+        var line_increment = Number.parseInt((TIMELINE_CANVAS_WIDTH - border*2) / (timeline_times.length-1));
+
+        for(var x = 0; x < timeline_times.length; x++)
+        {
+            var start = [line_increment * x + border, border];
+            var end = [line_increment * x + border, TIMELINE_CANVAS_HEIGHT];
+            draw_line(start, end);
+            draw_text(timeline_times[x].name, start[0]-border, border-5, "#BBBBBB", `${20}px Helvetica`);
+        }
+    }
+
+
+    function draw_events(events, timeline_times, border)
+    {
+        for(var x = 0; x < events.length; x++)
+        {
+            var timeline_start = timeline_times[0].datetime;
+            var timeline_end = timeline_times[timeline_times.length-1].datetime;
+
+            // Get horizontal location for time
+            var horizontal_end = horizontal_screen_position(events[x].end, timeline_start, timeline_end, border);
+            var start_time = new Date(events[x].end.getTime() - events[x].duration);
+            var horizontal_start = horizontal_screen_position(start_time, timeline_start, timeline_end, border);
+
+            // Make the timespan always visible
+            if((horizontal_end - horizontal_start) < border)
+            {
+                horizontal_start = horizontal_end - border;
+            }
+
+            // Get vertical location for time
+            var start = [horizontal_start, (x+1) * 50 + border];
+            var end = [horizontal_end, (x+1) * 50 + border];
+            draw_line(start, end, "red", 30);
+        }
+    }
+
+
+    function test_timeline()
+    {
+        var week =
+        [
+            new TimelineTime(new Date(2022, 0, 31), "Monday"),
+            new TimelineTime(new Date(2022, 1, 1), "Tueday"),
+            new TimelineTime(new Date(2022, 1, 2), "Wednesday"),
+            new TimelineTime(new Date(2022, 1, 3), "Thursday"),
+            new TimelineTime(new Date(2022, 1, 4), "Friday"),
+            new TimelineTime(new Date(2022, 1, 5), "Saturday"),
+            new TimelineTime(new Date(2022, 1, 6), "Sunday"),
+            new TimelineTime(new Date(2022, 1, 7), "Monday"),
+        ];
+
+        var events =
+        [
+            new Event(new Date(2022, 0, 31, 12, 0, 0, 0), 43200, "Exam I"),
+            new Event(new Date(2022, 1, 2, 12, 0, 0, 0), 86400, "Project PT 1"),
+            new Event(new Date(2022, 1, 4, 12, 0, 0, 0), 3600, "Project PT 1"),
+            new Event(new Date(2022, 1, 3, 12, 0, 0, 0), 0, "Project PT 1"),
+            new Event(new Date(2022, 0, 31, 0, 0, 0, 0), 0, "Project PT 1"),
+        ];
+
+        week.sort(function(a, b) {if(a.datetime < b.datetime) return -1; if(a.datetime > b.datetime) return 1; return 0;});
+        draw_timeline(week);
+        draw_events(events, week, 30);
+    }
+
+
+    function main()
+    {
+        test_timeline();
+    }
+
+
+    main();
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html style="height:100%;">
+	<head>
+		<link rel='stylesheet' href='static/style.css'>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+		<title>PATH</title>
+	</head>
+
+	<header>
+		<div class="navbar">
+			<div style="padding-top: 2px; padding-bottom: 2px; background-color: #ababab;">
+				<h1> PATH </h1>
+			</div>
+			<a {% if request.path == "/" %} class="active"  {% endif %} href="/">Home</a>
+			<a {% if request.path == "/AddEvents" %} class="active"  {% endif %} href="/AddEvents">Add Events</a>
+			<a {% if request.path == "/Timeline" %} class="active"  {% endif %} href="/Timeline">Timeline</a>
+		</div>
+	</header>
+
+	<body style="height:100%;">
+		<div style="height:132px;width:100%;">
+		</div>
+		{% block body %}
+		{% endblock %}
+	</body>
+</html>
