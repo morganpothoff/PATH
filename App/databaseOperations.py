@@ -1,6 +1,7 @@
 
 
 from datetime import datetime
+import os
 
 
 def __CONNECT__(user: str, password: str, db_name: str):
@@ -56,10 +57,10 @@ def select_event_range(cursor, start: datetime, end: datetime):
 
 
 def main():
-	username = "test1"
-	password = "test1pass"
+	username = os.getenv("GC_DB_USER")
+	password = os.getenv("GC_DB_PASSWORD")
 	db_name = "PATH_DB"
-	ip_address = "34.71.64.211"
+	ip_address = os.getenv("GC_DB_IP")
 
 	cnx, cursor = __CONNECT__(username, password, db_name)
 
