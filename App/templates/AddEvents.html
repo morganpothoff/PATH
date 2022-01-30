@@ -3,33 +3,35 @@
 
         <div style="padding-left:20px">
             <h2>Please add the events you want to see on your timeline.</h2>
+            <p>
+                After you have filled out all the boxes, select the "Save Event" button. Continue to do this for all of your events.
+            </p>
         </div>
 
-        </div>
-
+    <div style="padding-left:15%">
         <form>
+            <br>
             Event Name:
-            <input type="text" name="Title" size="30">
+            <input type="text" name="Title" size="32px">
             <br>
             Course Name:
-            <input type="text" name="Course" size="30">
+            <input type="text" name="Course" size="31">
             <br>
             Type of Event (ex. Assignment):
             <input type="text" name="Type" size="15">
             <br>
             Due Date:
-            <input type="text" name="Date" size="20">
+            <input type="date" name="Date">
             <br>
-            Estimated Time:
-            <input type="text" name="Time" size="20">
+            Estimated Time (in hours):
+            <input type="number" id="time" name="time" min="1" max="150">
             <br>
         </form>
 
         <button type="button">Save Event</button>
         <br>
         <br>
-
         <button type="button">Done</button>
-    </body>
+    </div>
 
 {% endblock %}
