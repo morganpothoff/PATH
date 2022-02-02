@@ -1,5 +1,8 @@
 {% extends "Wrapper.html" %}
 {% block body %}
+        <div id="__DIV__time_range">
+
+        </div>
 
         <div id="__DIV__timeline" style="width:98%;height:100%;padding-left:1%;padding-right: 1%;padding-bottom: 1%;">
             <canvas id="__CANVAS__timeline" style="background-color: #333333;border-radius: 5px;">
@@ -19,17 +22,84 @@
 
     class Event
     {
-        constructor(end, duration /* milliseconds */, name, class_name, type)
+        constructor(end, duration /* milliseconds */, name, class_name, type, color="red")
         {
-            this.end = end;
+            this.end = new Date(end);
             this.duration = duration;
             this.name = name;
             this.class_name = class_name;
             this.type = type;
+            this.color = color;
         }
     }
 
 
+    class SummaryEvent extends Event
+    {
+        constructor(end, duration /* milliseconds */, name, class_name, type, is_remainder, color="red")
+        {
+            super(end, duration, name, class_name, type, color);
+            this.is_remainder = is_remainder;
+        }
+
+
+        can_run_completely_after_time(time)
+        {
+            // this finishes after the time and there is enough time before this ends to run in one go
+            return this.end.getTime() > time && this.end.getTime() - this.duration >= time;
+        }
+
+
+        conflicts_with_time(time)
+        {
+            return (this.end.getTime() > time) && ((this.end.getTime() - this.duration) < time);
+        }
+
+
+        duration_conflicts_with_any_events(events)
+        {
+            for(var x = 0; x < events.length; x++)
+            {
+                var event = events[x];
+                // Cannot conflict with anything that takes up 0 time.
+                if(!(this.duration || event.duration))
+                {
+                    return false;
+                }
+                // Some overlap
+                if((this.end.getTime() >= event.end.getTime()) && (this.end.getTime() - this.duration <= event.end.getTime() - event.duration))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+        ends_at_same_time_as_any_other_event(events)
+        {
+            for(var x = 0; x < events.length; x++)
+            {
+                if(events[x].end.getTime() == this.end.getTime())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+        split(split_time)
+        {
+            var consumed_duration = Math.abs(this.end.getTime() - split_time);
+            var remainder_end = new Date(split_time);
+            var remainder_duration = (this.duration - consumed_duration);
+
+            this.duration = consumed_duration;
+            return new SummaryEvent(remainder_end, remainder_duration, this.name, this.class_name, this.type, true,
+              this.color);
+        }
+    }
 
 
     class TimelineTime
@@ -47,6 +117,15 @@
     function print(value)
     {
         console.log(value);
+    }
+
+
+    function print_array(array)
+    {
+        for(var x = 0; x < array.length; x++)
+        {
+            print(array[x]);
+        }
     }
 
 
@@ -106,6 +185,7 @@
 
     
     // ————————————————————————————————————————————————— DRAW  DATA ————————————————————————————————————————————————— //
+    // —————————————————————————————————————————————————————————————————————————————————————————————————————————————— //
 
     function draw_timeline(timeline_times, border=35)
     {
@@ -121,7 +201,32 @@
     }
 
 
-    function draw_events(events, timeline_times, border)
+    function draw_summary_events(summary_events, timeline_times, border)
+    {
+        var colors = ["red", "orange", "yellow", "green", "blue", "purple"];
+
+        for(var x = 0; x < summary_events.length; x++)
+        {
+            if(summary_events[x].duration != 0)
+            {
+                var timeline_start = timeline_times[0].datetime;
+                var timeline_end = timeline_times[timeline_times.length-1].datetime;
+
+                // Get horizontal location for time
+                var horizontal_end = horizontal_screen_position(summary_events[x].end, timeline_start, timeline_end, border);
+                var start_time = new Date(summary_events[x].end.getTime() - summary_events[x].duration);
+                var horizontal_start = horizontal_screen_position(start_time, timeline_start, timeline_end, border);
+
+                // Get vertical location for time
+                var start = [horizontal_start, 50 + border];
+                var end = [horizontal_end, 50 + border];
+                draw_line(start, end, summary_events[x].color, 30);
+            }
+        }
+    }
+
+
+    function draw_events(events, timeline_times, border, y_offset=2)
     {
         for(var x = 0; x < events.length; x++)
         {
@@ -136,23 +241,147 @@
             // Make the timespan always visible
             if((horizontal_end - horizontal_start) < border)
             {
-                horizontal_start = horizontal_end - border;
+                horizontal_start = horizontal_end - (border-10);
             }
 
             // Get vertical location for time
-            var start = [horizontal_start, (x+1) * 50 + border];
-            var end = [horizontal_end, (x+1) * 50 + border];
-            draw_line(start, end, "red", 30);
+            var start = [horizontal_start, (x+y_offset) * 50 + border];
+            var end = [horizontal_end, (x+y_offset) * 50 + border];
+            draw_line(start, end, events[x].color, 30);
         }
     }
 
+
+    // ———————————————————————————————————————————— EVENTSUMMARY UTILITY ———————————————————————————————————————————— //
+    // —————————————————————————————————————————————————————————————————————————————————————————————————————————————— //
+
+    function _by_reverse_datetime_and_remainder(event_a, event_b)
+    {
+        // Deal with sooner event later
+        if(event_a.end < event_b.end)
+        {
+            return 1;
+        }
+        // Deal with later event sooner 
+        else if(event_a.end > event_b.end)
+        {
+            return -1;
+        }
+        // Events are equivalent in every way that count
+        else if(event_a.is_remainder == event_b.is_remainder)
+        {
+            return 0;
+        }
+        // A is less important than B, deal with it later
+        else if(event_a.is_remainder)
+        {
+            return -1;
+        }
+        // B is less important than A, deal with it later
+        else if(event_b.is_remainder)
+        {
+            return 1;
+        }
+        throw new Error("Sort logic error found");
+    }
+
+
+    function convert_Event_to_EventSummary(events)
+    {
+        var summary_events = [];
+        for(var x = 0; x < events.length; x++)
+        {
+            if(events[x].duration)
+            {
+                var event = events[x];
+                var converted = new SummaryEvent(event.end, event.duration, event.name, event.class_name, event.type,
+                  false, event.color);
+                summary_events.push(converted);
+            }
+        }
+
+        return summary_events;
+    }
+
+
+    // ——————————————————————————————————————— EVENTSUMMARY UTILITY::PUSHBACK ——————————————————————————————————————— //
+
+    // Determines if event time ends at 
+    function next_non_conflicting_event_time(current_event, events)
+    {
+        for(var x = 0; x < events.length; x++)
+        {
+            if(events[x].end.getTime() != current_event.end.getTime())
+            {
+                return events[x].end.getTime();
+            }
+        }
+
+        return current_event.end.getTime() - current_event.duration;
+    }
+
+
+    function push_start_time_conflicts_back(current_event, events)
+    {
+        var shift_back_time = next_non_conflicting_event_time(current_event, events);
+        for(var x = 0; x < events.length && events[x].end.getTime() == current_event.end.getTime(); x++)
+        {
+            events[x].end = new Date(shift_back_time);
+            events[x].is_remainder = true;
+        }
+    }
+
+
+    // ————————————————————————————————————————————————— ALGORITHM ————————————————————————————————————————————————— //
+
+    function event_summary(events)
+    {
+        var events_queue = convert_Event_to_EventSummary(events);
+        // sort event from latest to soonest
+        events_queue.sort(_by_reverse_datetime_and_remainder);
+
+        var summary_events = [];
+        for(var x = 0; events_queue.length && x < 6; x++)
+        {
+            var event = events_queue[0];
+            // Run in part
+            if(1 < events_queue.length && event.duration_conflicts_with_any_events(events_queue.slice(1)))
+            {
+                if(event.ends_at_same_time_as_any_other_event(events_queue.slice(1)))
+                {
+                    push_start_time_conflicts_back(event, events_queue.slice(1));
+                }
+
+                var remaining_event = event.split(events_queue[1].end.getTime());
+                var consumed_event = event;
+
+                summary_events.push(consumed_event);
+                events_queue.push(remaining_event);
+            }
+            // Runs completely
+            else
+            {
+                summary_events.push(event);
+            }
+
+            events_queue = events_queue.slice(1);
+            events_queue.sort(_by_reverse_datetime_and_remainder);
+        }
+
+        summary_events.reverse();
+        print_array(summary_events);  //TESTING
+        return summary_events;
+    }
+
+
+    // —————————————————————————————————————————————————— RUNNING —————————————————————————————————————————————————— //
 
     function test_timeline()
     {
         var week =
         [
             new TimelineTime(new Date(2022, 0, 31), "Monday"),
-            new TimelineTime(new Date(2022, 1, 1), "Tueday"),
+            new TimelineTime(new Date(2022, 1, 1), "Tuesday"),
             new TimelineTime(new Date(2022, 1, 2), "Wednesday"),
             new TimelineTime(new Date(2022, 1, 3), "Thursday"),
             new TimelineTime(new Date(2022, 1, 4), "Friday"),
@@ -160,19 +389,21 @@
             new TimelineTime(new Date(2022, 1, 6), "Sunday"),
             new TimelineTime(new Date(2022, 1, 7), "Monday"),
         ];
+        week.sort(function(a, b) {if(a.datetime < b.datetime) return -1; return a.datetime > b.datetime;});
 
-        var events =
+
+        events = 
         [
-            new Event(new Date(2022, 0, 31, 12, 0, 0, 0), 43200, "Exam I"),
-            new Event(new Date(2022, 1, 2, 12, 0, 0, 0), 86400, "Project PT 1"),
-            new Event(new Date(2022, 1, 4, 12, 0, 0, 0), 3600, "Project PT 1"),
-            new Event(new Date(2022, 1, 3, 12, 0, 0, 0), 0, "Project PT 1"),
-            new Event(new Date(2022, 0, 31, 0, 0, 0, 0), 0, "Project PT 1"),
+            new Event(new Date(2022, 1, 4, 12, 0, 0, 0), 86400000, "Project PT 2", "CSE 4351", "Assignment", "red"),
+            new Event(new Date(2022, 1, 4, 12, 0, 0, 0), 43200000, "Exam I", "CSE 4351", "Assignment", "purple"),
+            new Event(new Date(2022, 1, 4, 6, 0, 0, 0), 43200000, "Exam II", "CSE 4351", "Exam", "blue"),
         ];
+        events.sort((a,b)=>{if(a.end.getTime() < b.end.getTime()) return -1; return a.end.getTime() > b.end.getTime();})
 
-        week.sort(function(a, b) {if(a.datetime < b.datetime) return -1; if(a.datetime > b.datetime) return 1; return 0;});
         draw_timeline(week);
-        draw_events(events, week, 30);
+        summary_events = event_summary(events);
+        draw_summary_events(summary_events, week, 30);
+        draw_events(events, week, 30, 3);
     }
 
     
@@ -224,7 +455,7 @@
 
     function main()
     {
-        processForm();
+        test_timeline();
     }
 
 
